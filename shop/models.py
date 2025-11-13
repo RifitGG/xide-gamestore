@@ -91,6 +91,10 @@ class Cart(models.Model):
         return sum(item.total_price for item in self.items.all())
 
     @property
+    def total_price(self):
+        return sum(item.total_price for item in self.items.all())
+
+    @property
     def total_items(self):
         return sum(item.quantity for item in self.items.all())
 
@@ -164,7 +168,7 @@ class OrderItem(models.Model):
 class Review(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='reviews', verbose_name='Игра')
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')
-    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)], verbose_name='Оценка')
+    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)], verbose_name='Оценка')
     comment = models.TextField(verbose_name='Комментарий')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создан')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлен')

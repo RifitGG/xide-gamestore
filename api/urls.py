@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CategoryViewSet, GameViewSet, CartViewSet, OrderViewSet, ReviewViewSet
+from .views import CategoryViewSet, GameViewSet, CartViewSet, OrderViewSet, ReviewViewSet, update_profile_view
 from .views_auth import login_view, register_view, logout_view, current_user_view, user_library_view
 
 router = DefaultRouter()
@@ -17,5 +17,6 @@ urlpatterns = [
     path('register/', register_view, name='api_register'),
     path('logout/', logout_view, name='api_logout'),
     path('user/current/', current_user_view, name='current_user'),
+    path('user/update/', update_profile_view, name='update_profile'),
     path('user/library/', user_library_view, name='user_library'),
 ]

@@ -34,7 +34,7 @@
                         </div>
                         <div class="col-md-3 text-end">
                             <p class="mb-0 fw-bold fs-5">{{ item.total_price }} ₽</p>
-                            <p class="text-muted small mb-0">{{ item.game.final_price }} ₽ × {{ item.quantity }}</p>
+                            <p class="text-muted small mb-0">{{ item.game.final_price|floatformat:0 }} ₽ × {{ item.quantity }}</p>
                         </div>
                         <div class="col-md-1 text-end">
                             <a href="{% url 'shop:remove_from_cart' item.id %}" 

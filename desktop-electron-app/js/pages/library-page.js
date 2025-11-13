@@ -47,9 +47,12 @@ class LibraryPage {
                                 <select class="filter-select" id="platformFilter">
                                     <option value="all">Все платформы</option>
                                     <option value="PC">PC</option>
-                                    <option value="PlayStation">PlayStation</option>
-                                    <option value="Xbox">Xbox</option>
-                                    <option value="Nintendo Switch">Nintendo Switch</option>
+                                    <option value="PS5">PlayStation 5</option>
+                                    <option value="PS4">PlayStation 4</option>
+                                    <option value="XBOX_SERIES">Xbox Series X/S</option>
+                                    <option value="XBOX_ONE">Xbox One</option>
+                                    <option value="SWITCH">Nintendo Switch</option>
+                                    <option value="MULTI">Мультиплатформа</option>
                                 </select>
                             </div>
                             <div class="filter-group">
@@ -107,6 +110,7 @@ class LibraryPage {
             ? [...this.games]
             : this.games.filter(g => g.platform === this.currentPlatform);
 
+        // Сортировка
         switch (this.currentSort) {
             case 'name_asc':
                 this.filteredGames.sort((a, b) => a.title.localeCompare(b.title));

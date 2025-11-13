@@ -23,12 +23,17 @@ urlpatterns = [
 
     path('search/', views.search, name='search'),
     
+    # Отзывы
+    path('game/<int:game_id>/review/add/', views.add_review, name='add_review'),
+    
+    # Аутентификация
     path('register/', views.register_view, name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
     path('profile/edit/', views.edit_profile_view, name='edit_profile'),
     
+    # API для проверки данных
     path('check_username/', views.check_username, name='check_username'),
     path('check_email/', views.check_email, name='check_email'),
 ]

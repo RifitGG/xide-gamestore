@@ -65,7 +65,7 @@ class CartPage {
                     <div class="summary-items">
                         <div class="summary-row">
                             <span class="summary-label">Товары (${this.cart.total_items}):</span>
-                            <span class="summary-value">${Number(this.cart.total_cost || 0).toFixed(2)} ₽</span>
+                            <span class="summary-value">${Math.floor(Number(this.cart.total_cost || 0))} ₽</span>
                         </div>
                         <div class="summary-row">
                             <span class="summary-label">Скидка:</span>
@@ -77,7 +77,7 @@ class CartPage {
 
                     <div class="summary-total">
                         <span class="summary-total-label">Итого к оплате:</span>
-                        <span class="summary-total-value">${Number(this.cart.total_cost || 0).toFixed(2)} ₽</span>
+                        <span class="summary-total-value">${Math.floor(Number(this.cart.total_cost || 0))} ₽</span>
                     </div>
 
                     <button class="btn-primary btn-checkout" id="checkoutBtn">
@@ -156,10 +156,10 @@ class CartPage {
 
         const originalPrice = item.game.old_price || item.game.price;
         const currentPrice = item.game.final_price || item.game.price;
-        const hasDiscount = originalPrice > currentPrice;
-        const discount = hasDiscount ? Math.round((1 - currentPrice / originalPrice) * 100) : 0;
+        const hasDiscount = item.game.discount_percentage > 0;
+        const discount = item.game.discount_percentage || 0;
 
-        console.log(`🛒 Рендер товара: ${item.game.title}, цена=${currentPrice}, старая=${originalPrice}`);
+        console.log(`🛒 Рендер товара: ${item.game.title}, цена=${currentPrice}, старая=${originalPrice}, скидка=${discount}%`);
 
         itemEl.innerHTML = `
             <div class="cart-item-image">
@@ -202,13 +202,13 @@ class CartPage {
             </div>
             <div class="cart-item-pricing">
                 ${hasDiscount ? `
-                    <div class="cart-item-price-old">${Number(originalPrice).toFixed(2)} ₽</div>
-                    <div class="cart-item-price-current">${Number(currentPrice).toFixed(2)} ₽</div>
+                    <div class="cart-item-price-old">${Math.floor(Number(originalPrice))} ₽</div>
+                    <div class="cart-item-price-current">${Math.floor(Number(currentPrice))} ₽</div>
                 ` : `
-                    <div class="cart-item-price-current">${Number(currentPrice).toFixed(2)} ₽</div>
+                    <div class="cart-item-price-current">${Math.floor(Number(currentPrice))} ₽</div>
                 `}
                 <div class="cart-item-total">
-                    Итого: <strong>${Number(currentPrice * item.quantity).toFixed(2)} ₽</strong>
+                    Итого: <strong>${Math.floor(Number(currentPrice * item.quantity))} ₽</strong>
                 </div>
             </div>
             <button class="cart-item-remove" data-item-id="${item.id}" title="Удалить из корзины">
@@ -371,7 +371,7 @@ class CartPage {
                         </div>
                         <div class="checkout-summary-row">
                             <span>Сумма заказа:</span>
-                            <strong>${Number(this.cart.total_cost || 0).toFixed(2)} ₽</strong>
+                            <strong>${Math.floor(Number(this.cart.total_cost || 0))} ₽</strong>
                         </div>
                     </div>
                 </div>
@@ -415,7 +415,7 @@ class CartPage {
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                             <path d="M16 6L7.5 14.5L4 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        Подтвердить заказ на ${Number(this.cart.total_cost || 0).toFixed(2)} ₽
+                        Подтвердить заказ на ${Math.floor(Number(this.cart.total_cost || 0))} ₽
                     </button>
                     <button type="button" class="btn-secondary" onclick="this.closest('.modal').querySelector('.modal-close').click()">
                         Отмена
@@ -451,24 +451,46 @@ class CartPage {
                 if (result.success) {
                     modal.close();
 
-                    const successModal = new Modal('✅ Заказ оформлен!', `
-                        <div class="order-success">
-                            <div class="success-icon">✅</div>
-                            <h3>Заказ успешно оплачен!</h3>
-                            <p class="success-message">
-                                Игры добавлены в вашу библиотеку!
-                            </p>
+                    const successModal = new Modal('', `
+                        <div class="order-success-modal">
+                            <div class="success-checkmark">
+                                <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                                    <circle cx="40" cy="40" r="38" stroke="#4caf50" stroke-width="4"/>
+                                    <path d="M20 40L35 55L60 25" stroke="#4caf50" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <h2 class="success-title">Заказ успешно оплачен!</h2>
+                            <p class="success-subtitle">Игры добавлены в вашу библиотеку</p>
                             <div class="success-actions">
-                                <button class="btn-primary" onclick="window.app.showPage('library'); this.closest('.modal').querySelector('.modal-close').click();">
-                                    📚 Перейти в библиотеку
+                                <button class="btn-success-primary" id="goToLibraryBtn">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-right: 8px;">
+                                        <path d="M4 4H16V14L10 18L4 14V4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    ПЕРЕЙТИ В БИБЛИОТЕКУ
                                 </button>
-                                <button class="btn-secondary" onclick="window.app.showPage('store'); this.closest('.modal').querySelector('.modal-close').click();">
-                                    🛍️ Продолжить покупки
+                                <button class="btn-success-secondary" id="goToStoreBtn">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-right: 8px;">
+                                        <path d="M3 3L6 3L8 16L16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <circle cx="8.5" cy="18.5" r="1.5" stroke="currentColor" stroke-width="2"/>
+                                        <circle cx="15.5" cy="18.5" r="1.5" stroke="currentColor" stroke-width="2"/>
+                                    </svg>
+                                    ПРОДОЛЖИТЬ ПОКУПКИ
                                 </button>
                             </div>
                         </div>
                     `);
                     successModal.show();
+                    
+                    // Добавляем обработчики для кнопок после отображения модального окна
+                    document.getElementById('goToLibraryBtn').addEventListener('click', () => {
+                        successModal.close();
+                        window.app.showPage('library');
+                    });
+                    
+                    document.getElementById('goToStoreBtn').addEventListener('click', () => {
+                        successModal.close();
+                        window.app.showPage('store');
+                    });
                     
                     await this.loadCart();
                     updateCartBadge();

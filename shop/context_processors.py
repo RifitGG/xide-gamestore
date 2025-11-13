@@ -1,4 +1,4 @@
-from .models import Cart
+from .models import Cart, Category
 
 def get_or_create_cart(request):
     if request.user.is_authenticated:
@@ -16,4 +16,9 @@ def cart_context(request):
     return {
         'cart': cart,
         'cart_items_count': cart.total_items,
+    }
+
+def categories(request):
+    return {
+        'categories': Category.objects.all()
     }

@@ -37,10 +37,10 @@ class GameCard {
                 <div class="game-card-footer">
                     <div class="game-card-price">
                         ${this.game.discount_percentage > 0 ? `
-                            <span class="price-old">${this.game.price} ₽</span>
-                            <span class="price-new">${this.game.final_price} ₽</span>
+                            <span class="price-old">${Math.floor(this.game.price)} ₽</span>
+                            <span class="price-new">${Math.floor(this.game.final_price)} ₽</span>
                         ` : `
-                            <span class="price-current">${this.game.price} ₽</span>
+                            <span class="price-current">${Math.floor(this.game.price)} ₽</span>
                         `}
                     </div>
                     <button class="btn-add-cart" data-game-id="${this.game.id}">
@@ -106,13 +106,8 @@ async function updateCartBadge() {
     if (result.success) {
         const badge = document.getElementById('cartBadge');
         const itemCount = result.data.total_items || 0;
-        
-        if (itemCount > 0) {
-            badge.textContent = itemCount;
-            badge.style.display = 'block';
-        } else {
-            badge.style.display = 'none';
-        }
+
+        badge.style.display = 'none';
     }
 }
 

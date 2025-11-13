@@ -52,10 +52,10 @@
                             <div class="mb-2">
                                 <span class="badge bg-danger fs-6">-{{ game.discount_percentage }}%</span>
                             </div>
-                            <div class="text-decoration-line-through text-muted h5">{{ game.price }} ₽</div>
-                            <div class="display-4 text-success fw-bold">{{ game.final_price }} ₽</div>
+                            <div class="text-decoration-line-through text-muted h5">{{ game.price|floatformat:0 }} ₽</div>
+                            <div class="display-4 text-success fw-bold">{{ game.final_price|floatformat:0 }} ₽</div>
                             {% else %}
-                            <div class="display-4 fw-bold">{{ game.price }} ₽</div>
+                            <div class="display-4 fw-bold">{{ game.price|floatformat:0 }} ₽</div>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
@@ -78,53 +78,148 @@
                 </div>
             </div>
 
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Информация об игре</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-borderless">
-                        <tr>
-                            <td class="fw-bold">Разработчик:</td>
-                            <td>{{ game.developer }}</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold">Издатель:</td>
-                            <td>{{ game.publisher }}</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold">Дата выхода:</td>
-                            <td>{{ game.release_date|date:"d.m.Y" }}</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold">Категория:</td>
-                            <td>{{ game.category.name }}</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold">Рейтинг:</td>
-                            <td>
-                                <i class="bi bi-star-fill text-warning"></i>
-                                {{ game.rating }}/10
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold">Просмотры:</td>
-                            <td>{{ game.views }}</td>
-                        </tr>
-                    </table>
+            <div class="game-info-section-web mb-4">
+                <h5 class="game-info-header-web">Информация об игре</h5>
+                <div class="game-meta-grid-web">
+                    <div class="meta-item-web">
+                        <span class="meta-label-web">Разработчик:</span>
+                        <span class="meta-value-web">{{ game.developer }}</span>
+                    </div>
+                    <div class="meta-item-web">
+                        <span class="meta-label-web">Издатель:</span>
+                        <span class="meta-value-web">{{ game.publisher }}</span>
+                    </div>
+                    <div class="meta-item-web">
+                        <span class="meta-label-web">Дата выхода:</span>
+                        <span class="meta-value-web">{{ game.release_date|date:"d.m.Y" }}</span>
+                    </div>
+                    <div class="meta-item-web">
+                        <span class="meta-label-web">Категория:</span>
+                        <span class="meta-value-web">{{ game.category.name }}</span>
+                    </div>
+                    <div class="meta-item-web">
+                        <span class="meta-label-web">Рейтинг:</span>
+                        <span class="meta-value-web">⭐ {{ game.rating }}/10</span>
+                    </div>
+                    <div class="meta-item-web">
+                        <span class="meta-label-web">Просмотры:</span>
+                        <span class="meta-value-web">{{ game.views }}</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0">Описание</h5>
-                </div>
-                <div class="card-body">
+            <div class="game-description-section-web">
+                <h5 class="game-info-header-web">Описание</h5>
+                <div class="game-description-content-web">
                     <p>{{ game.description|linebreaks }}</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Секция отзывов -->
+    <section class="mt-5 reviews-section-web">
+        <div class="reviews-header-web">
+            <h2 class="reviews-title-web">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="vertical-align: middle; margin-right: 8px;">
+                    <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                ОТЗЫВЫ
+            </h2>
+            <div class="reviews-stats-web">
+                <span class="reviews-count-web">{{ reviews.count }} отзыв{{ reviews.count|pluralize:"ов,а,ов" }}</span>
+                {% if reviews.count > 0 %}
+                <span class="reviews-avg-web">
+                    ⭐ {{ game.rating }}/10
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if user.is_authenticated %}
+        <div class="review-form-container-web">
+            <button class="review-form-toggle-web" id="toggleReviewForm">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="vertical-align: middle; margin-right: 8px;">
+                    <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Оставить отзыв
+            </button>
+            <div class="review-form-content-web" id="reviewFormContent">
+                <form method="post" action="{% url 'shop:add_review' game.id %}" class="review-form-web">
+                    {% csrf_token %}
+                    <div class="form-group-web">
+                        <label class="form-label-web">Оценка * (от 1 до 10)</label>
+                        <div class="rating-input-web">
+                            {% for i in "12345678910" %}
+                            <label class="rating-label-web">
+                                <input type="radio" name="rating" value="{{ forloop.counter }}" 
+                                       {% if user_review and user_review.rating == forloop.counter %}checked{% endif %}
+                                       {% if forloop.counter == 8 and not user_review %}checked{% endif %}>
+                                <span class="rating-number-web">{{ forloop.counter }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="form-group-web">
+                        <label for="comment" class="form-label-web">Комментарий *</label>
+                        <textarea class="form-textarea-web" id="comment" name="comment" rows="4" maxlength="1000" required 
+                                  placeholder="Поделитесь своим мнением об игре...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+                        <div class="char-counter-web">
+                            <span id="charCount">0</span>/1000
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit-review-web">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="vertical-align: middle; margin-right: 8px;">
+                            <path d="M16 6L7.5 14.5L4 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        ОТПРАВИТЬ ОТЗЫВ
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="review-auth-required-web">
+            <p>Войдите, чтобы оставить отзыв</p>
+            <a href="{% url 'shop:login' %}?next={{ request.path }}" class="btn-login-web">Войти</a>
+        </div>
+        {% endif %}
+
+        <!-- Список отзывов -->
+        <div class="reviews-list-web">
+            {% for review in reviews %}
+            <div class="review-card-web">
+                <div class="review-header-web">
+                    <div class="review-user-web">
+                        <div class="review-avatar-web">
+                            {{ review.user.username.0|upper }}
+                        </div>
+                        <div class="review-user-info-web">
+                            <span class="review-username-web">{{ review.user.username }}</span>
+                            <span class="review-date-web">{{ review.created_at|date:"d F Y" }}</span>
+                        </div>
+                    </div>
+                    <div class="review-rating-web">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 1L12.5 7.5H19L14 11.5L16.5 18L10 14L3.5 18L6 11.5L1 7.5H7.5L10 1Z" fill="currentColor"/>
+                        </svg>
+                        <span class="rating-value-web">{{ review.rating }}/10</span>
+                    </div>
+                </div>
+                <div class="review-content-web">
+                    <p>{{ review.comment|linebreaks }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-reviews-web">
+                <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                    <circle cx="30" cy="30" r="28" stroke="currentColor" stroke-width="3"/>
+                    <path d="M20 25H40M20 35H40" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+                <p>Пока нет отзывов. Будьте первым!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
 
 
     {% if related_games %}
@@ -153,4 +248,38 @@
     </section>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Переключение формы отзыва
+        const toggleBtn = document.getElementById('toggleReviewForm');
+        const formContent = document.getElementById('reviewFormContent');
+        
+        if (toggleBtn && formContent) {
+            toggleBtn.addEventListener('click', function() {
+                formContent.classList.toggle('active');
+                const isActive = formContent.classList.contains('active');
+                toggleBtn.innerHTML = isActive 
+                    ? '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="vertical-align: middle; margin-right: 8px;"><path d="M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Свернуть'
+                    : '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="vertical-align: middle; margin-right: 8px;"><path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Оставить отзыв';
+            });
+        }
+        
+        // Подсчет символов в комментарии
+        const commentTextarea = document.getElementById('comment');
+        const charCount = document.getElementById('charCount');
+        
+        if (commentTextarea && charCount) {
+            function updateCharCount() {
+                const count = commentTextarea.value.length;
+                charCount.textContent = count;
+            }
+            
+            commentTextarea.addEventListener('input', updateCharCount);
+            updateCharCount();
+        }
+    });
+</script>
 {% endblock %}

@@ -13,8 +13,11 @@ class StorePage {
 
         page.innerHTML = `
             <div class="store-layout">
-                <!-- Боковая панель с фильтрами -->
-                <aside class="filters-sidebar">
+                <!-- Overlay для фильтров -->
+                <div class="filters-overlay" id="filtersOverlay"></div>
+                
+                <!-- Боковая панель с фильтрами (выдвижная) -->
+                <aside class="filters-sidebar" id="filtersSidebar">
                     <div class="filters-header">
                         <h3>
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -22,73 +25,97 @@ class StorePage {
                             </svg>
                             ФИЛЬТРЫ
                         </h3>
-                        <button class="btn-text" id="resetFiltersBtn">Сбросить</button>
+                        <button class="btn-close-filters" id="closeFiltersBtn">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Быстрые фильтры -->
+                    <div class="filter-section">
+                        <h4 class="filter-section-title">Спецпредложения</h4>
+                        <div class="filter-options">
+                            <label class="filter-option">
+                                <input type="checkbox" id="filterNew">
+                                <span class="filter-label">Новинки</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" id="filterFeatured">
+                                <span class="filter-label">Рекомендуемые</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" id="filterDiscount">
+                                <span class="filter-label">Со скидкой</span>
+                            </label>
+                        </div>
                     </div>
 
                     <!-- Категории -->
-                    <div class="filter-group">
-                        <h4 class="filter-title">Категории</h4>
-                        <div class="filter-list" id="categoryFilters">
-                            <label class="filter-item">
+                    <div class="filter-section">
+                        <h4 class="filter-section-title filter-section-collapsible">
+                            <span>Категории</span>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="collapse-icon">
+                                <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </h4>
+                        <div class="filter-content" id="categoryFilters">
+                            <label class="filter-option">
                                 <input type="radio" name="category" value="" checked>
-                                <span>Все категории</span>
+                                <span class="filter-label">Все категории</span>
                             </label>
                         </div>
                     </div>
 
                     <!-- Платформы -->
-                    <div class="filter-group">
-                        <h4 class="filter-title">Платформа</h4>
-                        <div class="filter-list" id="platformFilters">
-                            <label class="filter-item">
+                    <div class="filter-section">
+                        <h4 class="filter-section-title">Платформа</h4>
+                        <div class="filter-content" id="platformFilters">
+                            <label class="filter-option">
                                 <input type="radio" name="platform" value="" checked>
-                                <span>Все платформы</span>
+                                <span class="filter-label">Все платформы</span>
                             </label>
-                            <label class="filter-item">
+                            <label class="filter-option">
                                 <input type="radio" name="platform" value="PC">
-                                <span>PC</span>
+                                <span class="filter-label">PC</span>
                             </label>
-                            <label class="filter-item">
+                            <label class="filter-option">
                                 <input type="radio" name="platform" value="PS5">
-                                <span>PlayStation 5</span>
+                                <span class="filter-label">PlayStation 5</span>
                             </label>
-                            <label class="filter-item">
+                            <label class="filter-option">
                                 <input type="radio" name="platform" value="XBOX">
-                                <span>Xbox Series X/S</span>
+                                <span class="filter-label">Xbox Series X/S</span>
                             </label>
-                            <label class="filter-item">
+                            <label class="filter-option">
                                 <input type="radio" name="platform" value="SWITCH">
-                                <span>Nintendo Switch</span>
+                                <span class="filter-label">Nintendo Switch</span>
                             </label>
                         </div>
                     </div>
 
                     <!-- Цена -->
-                    <div class="filter-group">
-                        <h4 class="filter-title">Цена</h4>
-                        <div class="price-inputs">
-                            <input type="number" id="priceMin" placeholder="От" min="0">
-                            <span>—</span>
-                            <input type="number" id="priceMax" placeholder="До" min="0">
+                    <div class="filter-section">
+                        <h4 class="filter-section-title">Диапазон цен</h4>
+                        <div class="price-range">
+                            <div class="price-input-group">
+                                <input type="number" id="priceMin" placeholder="От" min="0">
+                                <span class="price-separator">—</span>
+                                <input type="number" id="priceMax" placeholder="До" min="0">
+                            </div>
+                            <button class="btn-apply-price" id="applyPriceBtn">Применить</button>
                         </div>
-                        <button class="btn-secondary btn-sm" id="applyPriceBtn">Применить</button>
                     </div>
-
-                    <!-- Быстрые фильтры -->
-                    <div class="filter-group">
-                        <h4 class="filter-title">Быстрые фильтры</h4>
-                        <label class="filter-checkbox">
-                            <input type="checkbox" id="filterNew">
-                            <span>Только новинки</span>
-                        </label>
-                        <label class="filter-checkbox">
-                            <input type="checkbox" id="filterFeatured">
-                            <span>Спецпредложения</span>
-                        </label>
-                        <label class="filter-checkbox">
-                            <input type="checkbox" id="filterDiscount">
-                            <span>Со скидкой</span>
-                        </label>
+                    
+                    <!-- Кнопка сброса фильтров -->
+                    <div class="filter-section">
+                        <button class="btn-reset-filters" id="resetFiltersBtn">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M14 8A6 6 0 1 1 2 8a6 6 0 0 1 12 0Z" stroke="currentColor" stroke-width="2"/>
+                                <path d="M8 4v4l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Сбросить все фильтры
+                        </button>
                     </div>
                 </aside>
 
@@ -96,7 +123,15 @@ class StorePage {
                 <main class="store-main">
                     <!-- Заголовок и сортировка -->
                     <div class="store-header">
-                        <h2 id="storeTitle">ВСЕ ИГРЫ</h2>
+                        <div class="store-header-left">
+                            <button class="btn-toggle-filters" id="toggleFiltersBtn">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M2 5h16M5 10h10M8 15h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                Фильтры
+                            </button>
+                            <h2 id="storeTitle">ВСЕ ИГРЫ</h2>
+                        </div>
                         <div class="store-controls">
                             <select class="sort-select" id="sortSelect">
                                 <option value="-created_at">Новые</option>
@@ -126,6 +161,31 @@ class StorePage {
     }
 
     setupFilters() {
+        // Обработчики для открытия/закрытия фильтров
+        const toggleBtn = document.getElementById('toggleFiltersBtn');
+        const closeBtn = document.getElementById('closeFiltersBtn');
+        const overlay = document.getElementById('filtersOverlay');
+        const sidebar = document.getElementById('filtersSidebar');
+        
+        const openFilters = () => {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+        };
+        
+        const closeFilters = () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        };
+        
+        toggleBtn?.addEventListener('click', openFilters);
+        closeBtn?.addEventListener('click', closeFilters);
+        overlay?.addEventListener('click', closeFilters);
+        
+        // Обработчик для сворачивания категорий
+        document.querySelector('.filter-section-collapsible')?.addEventListener('click', function() {
+            this.parentElement.classList.toggle('collapsed');
+        });
+        
         document.querySelectorAll('input[name="category"]').forEach(input => {
             input.addEventListener('change', () => {
                 this.currentCategory = input.value;
@@ -208,10 +268,10 @@ class StorePage {
             if (container) {
                 this.categories.forEach(cat => {
                     const label = document.createElement('label');
-                    label.className = 'filter-item';
+                    label.className = 'filter-option';
                     label.innerHTML = `
                         <input type="radio" name="category" value="${cat.slug}">
-                        <span>${cat.name}</span>
+                        <span class="filter-label">${cat.name}</span>
                     `;
                     label.querySelector('input').addEventListener('change', () => {
                         this.currentCategory = cat.slug;

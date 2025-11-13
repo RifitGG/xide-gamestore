@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Q, Count
 from django.http import JsonResponse
-from .models import Game, Category, Cart, CartItem, Order, OrderItem
+from .models import Game, Category, Cart, CartItem, Order, OrderItem, Review
 from .context_processors import get_or_create_cart
 import uuid
 from datetime import datetime
@@ -57,10 +57,17 @@ def game_detail(request, slug):
         category=game.category,
         in_stock=True
     ).exclude(id=game.id)[:4]
+    
+    reviews = game.reviews.all()
+    user_review = None
+    if request.user.is_authenticated:
+        user_review = reviews.filter(user=request.user).first()
 
     context = {
         'game': game,
         'related_games': related_games,
+        'reviews': reviews,
+        'user_review': user_review,
     }
     return render(request, 'shop/game_detail.html', context)
 
@@ -143,7 +150,7 @@ def checkout(request):
             email=request.POST.get('email'),
             phone=request.POST.get('phone'),
             total_price=cart.total_cost,
-            status='PENDING'
+            status='COMPLETED'
         )
 
         for cart_item in cart.items.all():
@@ -191,9 +198,11 @@ def process_payment(request, order_number):
         order = get_object_or_404(Order, order_number=order_number, user=request.user)
         
         if order.status == 'PENDING':
+            # Фиктивная обработка оплаты
             card_number = request.POST.get('card_number', '').replace(' ', '')
             card_name = request.POST.get('card_name')
             
+            # Имитация проверки карты
             if len(card_number) == 16 and card_name:
                 order.status = 'PAID'
                 order.paid_at = datetime.now()
@@ -291,7 +300,7 @@ def profile_view(request):
         return redirect('shop:login')
     
     orders = Order.objects.filter(user=request.user).order_by('-created_at')
-    
+
     total_games = 0
     for order in orders:
         total_games += order.items.count()
@@ -314,22 +323,23 @@ def edit_profile_view(request):
         confirm_password = request.POST.get('confirm_password', '')
         
         user = request.user
-        
+
         if username != user.username:
             if User.objects.filter(username=username).exists():
                 messages.error(request, 'Пользователь с таким именем уже существует!')
                 return redirect('shop:edit_profile')
             user.username = username
         
+
         if email != user.email:
             if User.objects.filter(email=email).exists():
                 messages.error(request, 'Пользователь с таким email уже существует!')
                 return redirect('shop:edit_profile')
             user.email = email
-        
+
         user.first_name = first_name
         user.last_name = last_name
-        
+
         if new_password:
             if not current_password:
                 messages.error(request, 'Введите текущий пароль для смены!')
@@ -360,13 +370,51 @@ def edit_profile_view(request):
     return render(request, 'shop/edit_profile.html')
 
 def check_username(request):
-    """API endpoint для проверки существования username"""
     username = request.GET.get('username', '')
     exists = User.objects.filter(username=username).exists()
     return JsonResponse({'exists': exists})
 
 def check_email(request):
-    """API endpoint для проверки существования email"""
     email = request.GET.get('email', '')
     exists = User.objects.filter(email=email).exists()
     return JsonResponse({'exists': exists})
+
+@login_required
+def add_review(request, game_id):
+    if request.method == 'POST':
+        game = get_object_or_404(Game, id=game_id)
+        rating = request.POST.get('rating')
+        comment = request.POST.get('comment')
+        
+        if not rating or not comment:
+            messages.error(request, 'Пожалуйста, укажите оценку и комментарий')
+            return redirect('shop:game_detail', slug=game.slug)
+        
+        try:
+            rating = int(rating)
+            if rating < 1 or rating > 10:
+                messages.error(request, 'Оценка должна быть от 1 до 10')
+                return redirect('shop:game_detail', slug=game.slug)
+        except ValueError:
+            messages.error(request, 'Некорректная оценка')
+            return redirect('shop:game_detail', slug=game.slug)
+
+        existing_review = Review.objects.filter(game=game, user=request.user).first()
+        
+        if existing_review:
+            existing_review.rating = rating
+            existing_review.comment = comment
+            existing_review.save()
+            messages.success(request, 'Ваш отзыв обновлен!')
+        else:
+            Review.objects.create(
+                game=game,
+                user=request.user,
+                rating=rating,
+                comment=comment
+            )
+            messages.success(request, 'Спасибо за ваш отзыв!')
+        
+        return redirect('shop:game_detail', slug=game.slug)
+    
+    return redirect('shop:catalog')

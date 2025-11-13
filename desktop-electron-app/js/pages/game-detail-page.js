@@ -18,9 +18,9 @@ class GameDetailPage {
             this.game = result.data;
             page.innerHTML = this.renderGameDetail();
 
-            await this.loadReviews();
-
-            setTimeout(() => {
+            setTimeout(async () => {
+                await this.loadReviews();
+                
                 document.querySelector('#addToCartBtn')?.addEventListener('click', () => this.addToCart());
                 document.querySelector('#backBtn')?.addEventListener('click', () => window.app.showPage('store'));
                 document.querySelector('#reviewForm')?.addEventListener('submit', (e) => this.submitReview(e));
@@ -88,10 +88,10 @@ class GameDetailPage {
                     <div class="game-detail-purchase">
                         <div class="purchase-price">
                             ${this.game.discount_percentage > 0 ? `
-                                <span class="price-old-large">${this.game.price} ₽</span>
-                                <span class="price-new-large">${this.game.final_price} ₽</span>
+                                <span class="price-old-large">${Math.floor(this.game.price)} ₽</span>
+                                <span class="price-new-large">${Math.floor(this.game.final_price)} ₽</span>
                             ` : `
-                                <span class="price-current-large">${this.game.price} ₽</span>
+                                <span class="price-current-large">${Math.floor(this.game.price)} ₽</span>
                             `}
                         </div>
                         <button class="btn-add-cart-large" id="addToCartBtn">
@@ -136,6 +136,9 @@ class GameDetailPage {
     }
 
     renderReviewsSection() {
+        const isAuth = this.api && this.api.isAuthenticated;
+        console.log('🔐 isAuthenticated:', isAuth);
+        
         return `
             <div class="game-reviews-section" id="reviewsSection">
                 <div class="reviews-header">
@@ -150,12 +153,12 @@ class GameDetailPage {
                     </div>
                 </div>
 
-                ${this.api.isAuthenticated ? `
+                ${isAuth ? `
                     <div class="review-form-container">
                         <h3 class="review-form-title">Оставить отзыв</h3>
                         <form id="reviewForm" class="review-form">
                             <div class="form-group">
-                                <label for="reviewRating">Оценка *</label>
+                                <label for="reviewRating">Оценка * (от 1 до 10)</label>
                                 <div class="rating-input">
                                     ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => `
                                         <label class="rating-label">
@@ -191,7 +194,7 @@ class GameDetailPage {
                 ` : `
                     <div class="review-auth-required">
                         <p>Войдите, чтобы оставить отзыв</p>
-                        <button class="btn-secondary" onclick="window.app.showLoginPage()">Войти</button>
+                        <button class="btn-secondary" onclick="window.app.showPage('login')">Войти</button>
                     </div>
                 `}
 
@@ -217,10 +220,13 @@ class GameDetailPage {
 
         const result = await this.api.getReviews(this.game.id);
         console.log('💬 Результат отзывов:', result);
+        console.log('💬 result.success:', result.success);
+        console.log('💬 result.data:', result.data);
 
         if (result.success) {
-            this.reviews = Array.isArray(result.data) ? result.data : [];
+            this.reviews = Array.isArray(result.data) ? result.data : (result.data?.results || []);
             console.log(`   └─ Найдено отзывов: ${this.reviews.length}`);
+            console.log('   └─ Отзывы:', this.reviews);
 
             if (statsContainer) {
                 const avgRating = this.reviews.length > 0
@@ -337,9 +343,17 @@ class GameDetailPage {
             comment: comment
         });
 
+        console.log('📝 Результат отправки отзыва:', result);
+
         if (result.success) {
             showNotification('Отзыв успешно отправлен!', 'success');
             e.target.reset();
+            
+            // Восстанавливаем кнопку
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            
+            // Перезагружаем отзывы
             await this.loadReviews();
         } else {
             showNotification(result.error || 'Ошибка отправки отзыва', 'error');

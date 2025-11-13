@@ -1,0 +1,98 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+.admin-close-button {
+    background: #ba2121;
+    color: white !important;
+    border: none;
+    padding: 6px 15px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+    display: inline-block;
+    margin-left: 15px;
+    vertical-align: middle;
+}
+
+.admin-close-button:hover {
+    background: #a41515;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.admin-close-button::before {
+    content: "✕ ";
+    font-size: 13px;
+    margin-right: 3px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Находим breadcrumbs на любой странице админки
+    const breadcrumbs = document.querySelector('.breadcrumbs');
+    
+    // Проверяем, не главная ли это страница админки
+    const isIndexPage = window.location.pathname.endsWith('/admin/') || window.location.pathname === '/admin';
+    
+    if (breadcrumbs && !isIndexPage) {
+        // Создаем кнопку закрытия
+        const closeButton = document.createElement('a');
+        closeButton.className = 'admin-close-button';
+        closeButton.textContent = 'Закрыть';
+        closeButton.href = 'javascript:void(0)';
+        
+        // Добавляем кнопку в breadcrumbs
+        breadcrumbs.appendChild(closeButton);
+        
+        // Отслеживаем изменения в формах
+        let formChanged = false;
+        const forms = document.querySelectorAll('form');
+        
+        forms.forEach(form => {
+            form.addEventListener('input', function() {
+                formChanged = true;
+            });
+            
+            form.addEventListener('change', function() {
+                formChanged = true;
+            });
+        });
+        
+        closeButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            if (formChanged) {
+                if (confirm('У вас есть несохраненные изменения. Вы уверены, что хотите закрыть страницу?')) {
+                    if (document.referrer && document.referrer.includes('/admin/')) {
+                        history.back();
+                    } else {
+                        window.location.href = '/admin/';
+                    }
+                }
+            } else {
+                if (document.referrer && document.referrer.includes('/admin/')) {
+                    history.back();
+                } else {
+                    window.location.href = '/admin/';
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

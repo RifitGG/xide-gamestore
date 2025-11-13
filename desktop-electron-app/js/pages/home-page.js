@@ -11,22 +11,41 @@ class HomePage {
         page.id = 'homePage';
 
         page.innerHTML = `
-            <!-- Hero Section -->
-            <section class="hero-section">
-                <div class="hero-content">
-                    <h1 class="hero-title">Добро пожаловать в Xide</h1>
-                    <p class="hero-subtitle">Огромный маркетплейс видеоигр для всех платформ. Лучшие цены и мгновенная доставка!</p>
-                    <button class="btn-primary btn-lg hero-btn" onclick="window.app.showPage('store')">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M7 2L5 5H17L15 2H7Z" stroke="currentColor" stroke-width="2"/>
-                            <path d="M5 5H17V17C17 17.5523 16.5523 18 16 18H6C5.44772 18 5 17.5523 5 17V5Z" stroke="currentColor" stroke-width="2"/>
-                        </svg>
-                        Перейти в каталог
-                    </button>
-                </div>
-                <div class="hero-image">
-                    <div class="hero-game-showcase">
-                        <div class="showcase-badge">Новинка</div>
+            <!-- Hero Section with Slider -->
+            <section class="hero-main-section">
+                <div class="hero-container">
+                    <!-- Left Side - Text Content -->
+                    <div class="hero-content">
+                        <h1 class="hero-title">Добро пожаловать в Xide</h1>
+                        <p class="hero-description">Огромный маркетплейс видеоигр для всех платформ. Лучшие цены и мгновенная доставка!</p>
+                        <div class="hero-buttons">
+                            <button class="btn-hero-primary" id="goToCatalogBtn">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M3 3h14M3 7h14M3 11h14M3 15h14" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                ПЕРЕЙТИ В КАТАЛОГ
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Side - Game Slider -->
+                    <div class="hero-slider-container">
+                        <div class="hero-slider-mini" id="heroSliderMini">
+                            <div class="slider-wrapper-mini" id="sliderWrapperMini">
+                                <div class="loading-state-mini"><div class="spinner"></div></div>
+                            </div>
+                            <button class="slider-control-mini slider-prev-mini" id="sliderPrevMini">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M12 4L6 10L12 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                            <button class="slider-control-mini slider-next-mini" id="sliderNextMini">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M8 4L14 10L8 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                            <div class="slider-indicators-mini" id="sliderIndicatorsMini"></div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -138,11 +157,189 @@ class HomePage {
     async loadContent() {
         console.log('📦 Загрузка контента главной страницы...');
 
+        this.loadHeroSlider();
+        
         this.loadFeaturedGames();
 
         this.loadNewGames();
 
         this.loadCategories();
+        
+        // Обработчик кнопки "Перейти в каталог"
+        document.getElementById('goToCatalogBtn')?.addEventListener('click', () => {
+            window.app.showPage('store');
+        });
+    }
+
+    async loadHeroSlider() {
+        console.log('🎬 Загрузка мини-слайдера...');
+        const sliderWrapper = document.getElementById('sliderWrapperMini');
+        const sliderIndicators = document.getElementById('sliderIndicatorsMini');
+        
+        if (!sliderWrapper) {
+            console.error('❌ #sliderWrapperMini не найден!');
+            return;
+        }
+
+        const result = await this.api.getFeaturedGames();
+
+        if (result.success && result.data) {
+            const games = result.data.results || result.data;
+            const sliderGames = games.slice(0, 5);
+            
+            console.log(`   └─ Слайдов: ${sliderGames.length}`);
+            
+            sliderWrapper.innerHTML = '';
+            sliderIndicators.innerHTML = '';
+            
+            sliderGames.forEach((game, index) => {
+                const slide = this.renderMiniSlide(game, index);
+                sliderWrapper.appendChild(slide);
+                
+                const indicator = document.createElement('button');
+                indicator.className = `slider-indicator-mini ${index === 0 ? 'active' : ''}`;
+                indicator.addEventListener('click', () => this.goToSlide(index));
+                sliderIndicators.appendChild(indicator);
+            });
+            
+            this.currentSlide = 0;
+            this.totalSlides = sliderGames.length;
+            this.initializeSlider();
+        } else {
+            sliderWrapper.innerHTML = `
+                <div class="slider-slide active">
+                    <div class="slide-content">
+                        <h1>Добро пожаловать в Xide</h1>
+                        <p>Огромный маркетплейс видеоигр для всех платформ</p>
+                        <button class="btn-primary btn-lg" onclick="window.app.showPage('store')">
+                            Перейти в каталог
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    renderMiniSlide(game, index) {
+        const slide = document.createElement('div');
+        slide.className = `slider-slide-mini ${index === 0 ? 'active' : ''}`;
+        
+        const imageUrl = game.cover_image 
+            ? (game.cover_image.startsWith('http') ? game.cover_image : `${this.api.baseURL}${game.cover_image}`)
+            : 'https://via.placeholder.com/400x500?text=Game';
+        
+        slide.style.backgroundImage = `url('${imageUrl}')`;
+        
+        slide.innerHTML = `
+            <div class="mini-slide-overlay">
+                ${game.is_new ? '<span class="mini-slide-badge">Новинка</span>' : ''}
+            </div>
+        `;
+        
+        slide.addEventListener('click', () => {
+            window.app.showPage('game-detail', game.slug);
+        });
+        
+        return slide;
+    }
+
+    renderSlide(game, index) {
+        const slide = document.createElement('div');
+        slide.className = `slider-slide ${index === 0 ? 'active' : ''}`;
+        
+        const imageUrl = game.cover_image 
+            ? (game.cover_image.startsWith('http') ? game.cover_image : `${this.api.baseURL}${game.cover_image}`)
+            : 'https://via.placeholder.com/1200x500?text=Game';
+        
+        slide.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('${imageUrl}')`;
+        
+        const discount = game.discount_percentage > 0 
+            ? `<span class="slide-discount">-${game.discount_percentage}%</span>` 
+            : '';
+        
+        const oldPrice = game.discount_percentage > 0 
+            ? `<span class="slide-old-price">${Math.floor(game.price)} ₽</span>` 
+            : '';
+        
+        slide.innerHTML = `
+            <div class="slide-content">
+                <div class="slide-badge">${game.is_new ? 'Новинка' : 'Рекомендуем'}</div>
+                <h1 class="slide-title">${game.title}</h1>
+                <p class="slide-description">${game.short_description || game.description?.substring(0, 150) || 'Захватывающее игровое приключение'}</p>
+                <div class="slide-price">
+                    ${discount}
+                    ${oldPrice}
+                    <span class="slide-current-price">${Math.floor(game.final_price || game.price)} ₽</span>
+                </div>
+                <div class="slide-actions">
+                    <button class="btn-primary btn-lg" onclick="window.app.showGameDetail('${game.slug}')">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+                            <path d="M10 6V10L13 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Подробнее
+                    </button>
+                    <button class="btn-success btn-lg" onclick="window.addToCart(${game.id})">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M5 2L3 5V17C3 17.5523 3.44772 18 4 18H16C16.5523 18 17 17.5523 17 17V5L15 2H5Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M3 5H17" stroke="currentColor" stroke-width="2"/>
+                            <path d="M10 8V14M7 11H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        В корзину
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        return slide;
+    }
+
+    initializeSlider() {
+        const prevBtn = document.getElementById('sliderPrevMini');
+        const nextBtn = document.getElementById('sliderNextMini');
+        
+        if (prevBtn) prevBtn.addEventListener('click', () => this.previousSlide());
+        if (nextBtn) nextBtn.addEventListener('click', () => this.nextSlide());
+        
+        // Автоматическая прокрутка каждые 4 секунды
+        if (this.sliderInterval) clearInterval(this.sliderInterval);
+        this.sliderInterval = setInterval(() => this.nextSlide(), 4000);
+        
+        // Остановка автопрокрутки при наведении
+        const slider = document.getElementById('heroSliderMini');
+        if (slider) {
+            slider.addEventListener('mouseenter', () => {
+                if (this.sliderInterval) clearInterval(this.sliderInterval);
+            });
+            slider.addEventListener('mouseleave', () => {
+                this.sliderInterval = setInterval(() => this.nextSlide(), 4000);
+            });
+        }
+    }
+
+    goToSlide(index) {
+        const slides = document.querySelectorAll('.slider-slide-mini');
+        const indicators = document.querySelectorAll('.slider-indicator-mini');
+        
+        slides.forEach((slide, i) => {
+            slide.classList.toggle('active', i === index);
+        });
+        
+        indicators.forEach((indicator, i) => {
+            indicator.classList.toggle('active', i === index);
+        });
+        
+        this.currentSlide = index;
+    }
+
+    nextSlide() {
+        const nextIndex = (this.currentSlide + 1) % this.totalSlides;
+        this.goToSlide(nextIndex);
+    }
+
+    previousSlide() {
+        const prevIndex = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
+        this.goToSlide(prevIndex);
     }
 
     async loadFeaturedGames() {
@@ -239,27 +436,20 @@ class HomePage {
     renderCategoryCard(category) {
         const card = document.createElement('div');
         card.className = 'category-card';
-
-        const iconUrl = category.icon 
-            ? (category.icon.startsWith('http') ? category.icon : `${this.api.baseURL}${category.icon}`)
-            : null;
         
         card.innerHTML = `
             <div class="category-icon">
-                ${iconUrl 
-                    ? `<img src="${iconUrl}" alt="${category.name}">`
-                    : `<svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                        <rect x="8" y="8" width="32" height="32" rx="4" stroke="currentColor" stroke-width="3"/>
-                        <rect x="16" y="16" width="16" height="16" rx="2" fill="currentColor"/>
-                       </svg>`
-                }
+                <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 20C10 15.5817 13.5817 12 18 12H30L36 20H62C66.4183 20 70 23.5817 70 28V60C70 64.4183 66.4183 68 62 68H18C13.5817 68 10 64.4183 10 60V20Z" fill="#66c0f4"/>
+                </svg>
             </div>
             <h3 class="category-name">${category.name}</h3>
             <p class="category-desc">${category.description || 'Игры категории'}</p>
-            <button class="btn-secondary category-btn" onclick="window.app.showCatalogWithCategory('${category.slug}')">
-                Смотреть игры
-            </button>
         `;
+
+        card.addEventListener('click', () => {
+            window.app.showCatalogWithCategory(category.slug);
+        });
 
         return card;
     }

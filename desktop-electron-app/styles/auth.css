@@ -309,6 +309,104 @@
     box-shadow: 0 0 12px rgba(102, 192, 244, 0.4);
 }
 
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.settings-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.settings-form label {
+    color: var(--steam-text-primary);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.settings-form .form-input {
+    background: rgba(14, 15, 19, 0.9);
+    border: 1px solid var(--steam-border);
+    border-radius: 4px;
+    color: var(--steam-text-primary);
+    padding: 12px 16px;
+    font-size: 15px;
+    transition: all 0.2s ease;
+}
+
+.settings-form .form-input:focus {
+    outline: none;
+    border-color: var(--steam-accent-blue);
+    box-shadow: 0 0 12px rgba(102, 192, 244, 0.4);
+}
+
+.settings-form .form-input-disabled {
+    background: rgba(14, 15, 19, 0.5);
+    border: 1px solid rgba(42, 63, 95, 0.5);
+    border-radius: 4px;
+    color: var(--steam-text-secondary);
+    padding: 12px 16px;
+    font-size: 15px;
+    cursor: not-allowed;
+}
+
+.settings-form .form-hint {
+    color: var(--steam-text-secondary);
+    font-size: 12px;
+    font-style: italic;
+}
+
+.settings-form .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.settings-form .btn-primary {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 24px;
+    background: linear-gradient(to bottom, #75b022 5%, #588a1b 100%);
+    border: 1px solid #496621;
+    color: #d2e885;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.settings-form .btn-primary:hover {
+    background: linear-gradient(to bottom, #8ed629 5%, #6aa621 100%);
+    color: #ffffff;
+}
+
+.settings-form .btn-secondary {
+    flex: 1;
+    padding: 14px 24px;
+    background: transparent;
+    border: 1px solid var(--steam-border);
+    color: var(--steam-text-primary);
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.settings-form .btn-secondary:hover {
+    border-color: var(--steam-accent-blue);
+    color: var(--steam-accent-blue);
+}
+
+
 @media (max-width: 768px) {
     .auth-card {
         padding: 32px 24px;

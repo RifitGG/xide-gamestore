@@ -150,7 +150,7 @@ class ProfilePage {
             });
 
             document.querySelector('#settingsBtn')?.addEventListener('click', () => {
-                showNotification('Настройки скоро будут доступны', 'info');
+                this.showSettingsModal();
             });
 
             this.loadProfileData();
@@ -277,7 +277,7 @@ class ProfilePage {
                 ${moreGames}
             </div>
             <div class="order-card-footer">
-                <span class="order-total">${Number(order.total_price).toFixed(2)} ₽</span>
+                <span class="order-total">${Math.floor(Number(order.total_price))} ₽</span>
                 <button class="btn-sm btn-secondary">
                     Подробнее
                 </button>
@@ -311,7 +311,7 @@ class ProfilePage {
                         <span class="receipt-item-platform">${item.game.platform}</span>
                     </div>
                     <div class="receipt-item-price">
-                        <span class="receipt-item-quantity">${item.quantity} × ${Number(item.price).toFixed(2)} ₽</span>
+                        <span class="receipt-item-quantity">${item.quantity} × ${Math.floor(Number(item.price))} ₽</span>
                         <span class="receipt-item-total">${itemTotal.toFixed(2)} ₽</span>
                     </div>
                 </div>
@@ -355,7 +355,7 @@ class ProfilePage {
                     </div>
                     <div class="receipt-row receipt-total">
                         <span><strong>Итого:</strong></span>
-                        <span><strong>${Number(order.total_price).toFixed(2)} ₽</strong></span>
+                        <span><strong>${Math.floor(Number(order.total_price))} ₽</strong></span>
                     </div>
                 </div>
 
@@ -449,6 +449,87 @@ class ProfilePage {
             'CANCELLED': 'Отменен'
         };
         return statusMap[status] || status;
+    }
+
+    showSettingsModal() {
+        if (!this.userData) {
+            showNotification('Данные профиля не загружены', 'error');
+            return;
+        }
+
+        const modal = new Modal('Настройки профиля', `
+            <form id="profileSettingsForm" class="settings-form">
+                <div class="form-group">
+                    <label>Имя пользователя</label>
+                    <input type="text" name="username" value="${this.userData.username}" disabled class="form-input-disabled">
+                    <small class="form-hint">Имя пользователя нельзя изменить</small>
+                </div>
+                <div class="form-group">
+                    <label>Имя *</label>
+                    <input type="text" name="first_name" value="${this.userData.first_name || ''}" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Фамилия *</label>
+                    <input type="text" name="last_name" value="${this.userData.last_name || ''}" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" name="email" value="${this.userData.email || ''}" class="form-input" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="margin-right: 8px;">
+                            <path d="M16 6L7.5 14.5L4 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Сохранить изменения
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="this.closest('.modal').querySelector('.modal-close').click()">
+                        Отмена
+                    </button>
+                </div>
+            </form>
+        `);
+
+        modal.show();
+
+        setTimeout(() => {
+            const form = document.querySelector('#profileSettingsForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await this.updateProfile(new FormData(form));
+                    modal.close();
+                });
+            }
+        }, 100);
+    }
+
+    async updateProfile(formData) {
+        const data = {
+            first_name: formData.get('first_name'),
+            last_name: formData.get('last_name'),
+            email: formData.get('email')
+        };
+
+        const result = await this.api.request('/user/update/', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (result.success) {
+            showNotification('Профиль успешно обновлен', 'success');
+            this.userData = result.data;
+            
+            // Обновляем отображение
+            const displayName = result.data.first_name || result.data.username;
+            document.querySelector('#profileUsername').textContent = displayName;
+            document.querySelector('#profileEmail').textContent = result.data.email;
+        } else {
+            showNotification(result.error || 'Ошибка обновления профиля', 'error');
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, serializers
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -221,7 +221,52 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return Review.objects.all()
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        # Проверяем, есть ли уже отзыв от этого пользователя на эту игру
+        game_id = serializer.validated_data.get('game').id
+        existing_review = Review.objects.filter(
+            game_id=game_id,
+            user=self.request.user
+        ).first()
+        
+        if existing_review:
+            # Обновляем существующий отзыв
+            existing_review.rating = serializer.validated_data.get('rating')
+            existing_review.comment = serializer.validated_data.get('comment')
+            existing_review.save()
+            # Возвращаем обновленный отзыв вместо создания нового
+            raise serializers.ValidationError({
+                'detail': 'Отзыв обновлен',
+                'review': ReviewSerializer(existing_review).data
+            })
+        else:
+            serializer.save(user=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        game_id = serializer.validated_data.get('game').id
+        existing_review = Review.objects.filter(
+            game_id=game_id,
+            user=request.user
+        ).first()
+        
+        if existing_review:
+            existing_review.rating = serializer.validated_data.get('rating')
+            existing_review.comment = serializer.validated_data.get('comment')
+            existing_review.save()
+            return Response(
+                ReviewSerializer(existing_review).data,
+                status=status.HTTP_200_OK
+            )
+        else:
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
 
 
 
@@ -352,7 +397,7 @@ def current_user_view(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_library_view(request):
-    orders = Order.objects.filter(user=request.user, status='COMPLETED')
+    orders = Order.objects.filter(user=request.user, status__in=['COMPLETED', 'PAID'])
     games = []
     game_ids = set()
     
@@ -364,3 +409,29 @@ def user_library_view(request):
 
     serializer = GameListSerializer(games, many=True, context={'request': request})
     return Response(serializer.data)
+
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def update_profile_view(request):
+    user = request.user
+
+    if 'first_name' in request.data:
+        user.first_name = request.data['first_name']
+    if 'last_name' in request.data:
+        user.last_name = request.data['last_name']
+    if 'email' in request.data:
+        if User.objects.filter(email=request.data['email']).exclude(id=user.id).exists():
+            return Response({'error': 'Этот email уже используется'}, status=status.HTTP_400_BAD_REQUEST)
+        user.email = request.data['email']
+    
+    user.save()
+    
+    return Response({
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+    })
+
