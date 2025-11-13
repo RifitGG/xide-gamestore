@@ -6,3 +6,7 @@
 ![Electron](https://img.shields.io/badge/Electron-28.x-47848F.svg)
 ---
 ![alt text](https://i.postimg.cc/K8nT0wvd/Snimok-ekrana-2025-11-13-193840.png)
+> ## Web
+---
+![alt text](https://i.postimg.cc/mrgYp4pB/Snimok-ekrana-2025-11-13-194108.png)
+> ## Desktop
