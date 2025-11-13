@@ -1,5 +1,5 @@
 # Xide Gamestore 
-## Современный маркетплейс игр
+## Современный маркетплейс игр - магазин-аналог Steam или Epic Games Store. Проект разработан как полнофункциональная платформа для покупки и управления игровой библиотекой с удобным интерфейсом и надёжным бекэндом
 ![Version](https://img.shields.io/badge/version-2.0-blue.svg)
 ![Django](https://img.shields.io/badge/Django-4.2.7-green.svg)
 ![Python](https://img.shields.io/badge/Python-3.14-blue.svg)
